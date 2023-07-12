@@ -135,7 +135,10 @@ pub fn encrypt_file(path: impl AsRef<Path>,
 pub fn decrypt_file(path: impl AsRef<Path>, 
                     password: &str, 
                     monitor: &mut ProgressMonitor) -> Result<(), Box<dyn Error>> {
-    const MIN_FILE_SIZE: u64 = (HEADER_LEN + ORION_TAG_SIZE + CHUNK_SIZE + MAC_SIZE + 1) as u64;
+    const MIN_FILE_SIZE: u64 = (HEADER_LEN + ORION_TAG_SIZE + MAC_SIZE + 1) as u64;
+    //const MIN_FILE_SIZE: u64 = (HEADER_LEN + ORION_TAG_SIZE + CHUNK_SIZE + MAC_SIZE + 1) as u64;
+    dbg!(MIN_FILE_SIZE);
+    println!("Before path formatting..."); ////
     let in_path: &str = path.as_ref().to_str().ok_or("Invalid path format".to_owned())?;
     let mut out_path: String = if let Some(out_without_suffix) = in_path.strip_suffix(ENCRYPTED_FILE_SUFFIX) {
         out_without_suffix.to_string()
@@ -143,27 +146,35 @@ pub fn decrypt_file(path: impl AsRef<Path>,
         in_path.to_owned() + DECRYPTED_FILE_SUFFIX
     };
     out_path += TMP_FILE_SUFFIX;
+    println!("Before before out file creation..."); ////
     let mut out_file = File::create(&out_path)?;
 
+    println!("Before input file opening..."); ////
     let mut input_file = File::open(path)?;
-    if input_file.metadata()?.len() < MIN_FILE_SIZE {
+    println!("Before input file length checking..."); ////
+    if dbg!(input_file.metadata()?.len()) < MIN_FILE_SIZE {
         Err("File does not exist".to_owned())?;
     }
 
     let mut header_bytes = [0u8; HEADER_LEN];
+    println!("Before input file encryption header reading..."); ////
     input_file.read(&mut header_bytes)?;
+    println!("Before input file size reading..."); ////
     let input_file_size: u64 = input_file.metadata()?.len();
+    println!("Before input file encryption header parsing..."); ////
     let header = Header::try_from(header_bytes)?;
 
     monitor.on_key_derivation_started();
     let hash: [u8; DERIVED_HASH_LEN] = key_derivation::derive_with(&header.kdf_salt, 
                                                                    password.as_bytes());
     monitor.on_decryption_started();
+    println!("Before key derivation hash splitting..."); ////
     let (key, control_bytes) = key_derivation::split_hash(&hash)?;
     if &header.control_bytes != control_bytes {
         Err("Control bytes do not match".to_owned())?
     }
 
+    println!("Before secret key creation..."); ////
     let secret_key = SecretKey::from_slice(key)?;
     let stream_nonce = streaming::Nonce::from_slice(&header.cipher_nonce)?;
     let mut stream = StreamXChaCha20Poly1305::new(&secret_key, &stream_nonce);
@@ -171,6 +182,7 @@ pub fn decrypt_file(path: impl AsRef<Path>,
     let mut chunk_with_adata = vec![0u8; ORION_TAG_SIZE + CHUNK_SIZE + MAC_SIZE];
     let mut out_chunk = vec![0u8; CHUNK_SIZE];
     let mut loaded_bytes_size: u64 = 0;
+    println!("Before decrypting..."); ////
     loop {
         let bytes_count: usize = input_file.read(&mut chunk_with_adata)?;
         if bytes_count == 0 {

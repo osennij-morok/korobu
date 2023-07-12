@@ -83,19 +83,20 @@ impl eframe::App for Application {
             let screen_height: f32 = ui.available_height();
             ui.set_height(screen_height);
 
-            egui::menu::bar(ui, |ui| {
-                menu_btn("File", ui, |_ui| {
-                    // nothing happens
-                });
-                menu_btn("Help", ui, |_ui| {
-                    // nothing happens
-                });
-            });
+            //egui::menu::bar(ui, |ui| {
+            //    menu_btn("File", ui, |_ui| {
+            //        // nothing happens
+            //    });
+            //    menu_btn("Help", ui, |_ui| {
+            //        // nothing happens
+            //    });
+            //});
             match &self.mode {
                 Mode::Text => self.render_text_mode(ui),
                 Mode::Files { .. } => self.render_files_mode(ui),
             }   
         });
+        ctx.request_repaint();
     }
 }
 
@@ -280,7 +281,10 @@ async fn on_ui_message(message: UiMessage, text_mode_tx: &Sender<TextHandlerMess
                     dbg!(err);
                 };
             });
+            //if let Err(e) = crypto::file::decrypt_file(path, &password, &mut monitor) {
             if crypto::file::decrypt_file(path, &password, &mut monitor).is_err() {
+                //println!("Error:");
+                //dbg!(&e);
                 if let Err(_) = files_mode_tx.send(FilesHandlerMessage::DecryptionFailure).await {};                            
             } else {
                 println!("SUCCESSFULLY DECRYPTED");

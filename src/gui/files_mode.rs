@@ -35,17 +35,17 @@ impl FilesModeData {
     pub fn on_drop_file(&mut self, path: impl Into<PathBuf>) {
         match &self.state {
             FileModeState::WaitingForFile 
-                | FileModeState::FileIsChosen(_)
-                | FileModeState::FinishAndWaitingForFile
-                | FileModeState::ProcessingFailure => {
-                    let file_path: PathBuf = path.into();
-                    let file_name: &str = file_path.file_name()
-                        .and_then(|file_name: &OsStr| file_name.to_str())
-                        .unwrap_or("<unable_to_read>");
-                    let new_status = format!("Выбран файл\n{}", file_name);
-                    self.set_status(&new_status);
-                    self.state = FileModeState::FileIsChosen(file_path);
-                },
+            | FileModeState::FileIsChosen(_)
+            | FileModeState::FinishAndWaitingForFile
+            | FileModeState::ProcessingFailure => {
+                let file_path: PathBuf = path.into();
+                let file_name: &str = file_path.file_name()
+                    .and_then(|file_name: &OsStr| file_name.to_str())
+                    .unwrap_or("<unable_to_read>");
+                let new_status = format!("Выбран файл\n{}", file_name);
+                self.set_status(&new_status);
+                self.state = FileModeState::FileIsChosen(file_path);
+            },
             _ => {}
         }
     }
@@ -210,8 +210,6 @@ impl FilesMode for Application {
                 ui.add(progress_bar);
             }
 
-            ui.add_space(10.);
-
             let width: f32 = ui.available_width() - 10.;
 
             ui.vertical_centered(|ui| {
@@ -238,7 +236,10 @@ impl FilesMode for Application {
                             self.to_text_mode();
                         }
                     });
-                    // ui.separator();
+
+                    if !enable_encryption_buttons {
+                        ui.add_space(10.);
+                    }
                 });
             });
         });
