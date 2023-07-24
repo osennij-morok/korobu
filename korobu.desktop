@@ -1,0 +1,11 @@
+[Desktop Entry]
+
+Type=Application
+Version=1.5
+Name=korobu
+Comment=Encryptor for plaintext and files
+Path=/usr/bin
+Exec=korobu
+Icon=korobu
+Terminal=false
+Categories=Utility
