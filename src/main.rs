@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 #![feature(iter_array_chunks)]
 #![feature(box_syntax)]
 
